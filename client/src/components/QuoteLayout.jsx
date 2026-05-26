@@ -3,7 +3,7 @@ import { PawPrint, Phone } from "lucide-react";
 import "../styles/QuoteLayout.css";
 
 function QuoteLayout({ children, activeStep = 1 }) {
-  const steps = ["Pet Info", "Select Plan", "Your Information", "Checkout"];
+  const steps = ["Pet Info", "Select Plan", "Your Information", "Thank You"];
 
   return (
     <div className="quote-page">

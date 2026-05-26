@@ -191,7 +191,7 @@ function PersonalInfo() {
       localStorage.setItem("personalInfo", JSON.stringify(form));
 
       setTimeout(() => {
-        navigate("/checkout");
+        navigate("/success");
       }, 800);
     } catch (error) {
       setLoading(false);
@@ -339,7 +339,7 @@ function PersonalInfo() {
           {errors.submit && <p className="field-error-text">{errors.submit}</p>}
 
           <button className="primary-quote-btn" type="submit" disabled={loading}>
-            Continue to Checkout
+            Submit
           </button>
         </form>
       </main>
