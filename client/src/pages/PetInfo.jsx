@@ -141,7 +141,7 @@ function PetInfo() {
 
   const getDigits = (value) => value.replace(/\D/g, "");
 
-  const handleNext = async (e) => {
+  const handleNext = (e) => {
     e.preventDefault();
 
     const newErrors = {};
@@ -173,32 +173,29 @@ function PetInfo() {
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      localStorage.removeItem("uniqueId");
+    localStorage.removeItem("uniqueId");
+    localStorage.setItem("petInfo", JSON.stringify(form));
 
-      const visitorData = await getVisitorDataForLead();
+    setTimeout(() => {
+      navigate("/select-plan");
+    }, 1000);
 
-      const response = await api.post("/create-lead", {
-        ...form,
-        visitorData,
+    getVisitorDataForLead()
+      .then((visitorData) => {
+        return api.post("/create-lead", {
+          ...form,
+          visitorData,
+        });
+      })
+      .then((response) => {
+        const uniqueId = response.data.uniqueId;
+        localStorage.setItem("uniqueId", uniqueId);
+      })
+      .catch((error) => {
+        console.log("Pet info save failed:", error);
       });
-      const uniqueId = response.data.uniqueId;
-
-      localStorage.setItem("uniqueId", uniqueId);
-
-      localStorage.setItem("petInfo", JSON.stringify(form));
-
-      setTimeout(() => {
-        navigate("/select-plan");
-      }, 800);
-    } catch (error) {
-      setLoading(false);
-      setErrors({
-        submit: error.response?.data?.message || error.message || "Save failed",
-      });
-    }
   };
 
   return (

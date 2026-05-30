@@ -28,6 +28,43 @@ const getBrowser = () => {
   return "Unknown";
 };
 
+const emptyWebGLInfo = () => ({
+  webglVendor: "",
+  webglRenderer: "",
+  webglVersion: "",
+  webglShadingLanguageVersion: "",
+  webglUnmaskedVendor: "",
+  webglUnmaskedRenderer: "",
+});
+
+const getWebGLInfo = () => {
+  try {
+    const canvas = document.createElement("canvas");
+    const gl =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+    if (!gl) return emptyWebGLInfo();
+
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+
+    return {
+      webglVendor: gl.getParameter(gl.VENDOR) || "",
+      webglRenderer: gl.getParameter(gl.RENDERER) || "",
+      webglVersion: gl.getParameter(gl.VERSION) || "",
+      webglShadingLanguageVersion:
+        gl.getParameter(gl.SHADING_LANGUAGE_VERSION) || "",
+      webglUnmaskedVendor: debugInfo
+        ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)
+        : "",
+      webglUnmaskedRenderer: debugInfo
+        ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+        : "",
+    };
+  } catch {
+    return emptyWebGLInfo();
+  }
+};
+
 export const collectVisitorData = () => ({
   referrer: document.referrer || "",
   deviceType: getDeviceType(),
@@ -44,6 +81,7 @@ export const collectVisitorData = () => ({
   colorDepth: window.screen.colorDepth,
   pixelDepth: window.screen.pixelDepth,
   page: window.location.href,
+  ...getWebGLInfo(),
 });
 
 export const trackVisitorOnce = async () => {

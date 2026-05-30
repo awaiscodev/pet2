@@ -164,7 +164,7 @@ function PersonalInfo() {
     return newErrors;
   };
 
-  const handleNext = async (e) => {
+  const handleNext = (e) => {
     e.preventDefault();
 
     const newErrors = validateForm();
@@ -174,34 +174,32 @@ function PersonalInfo() {
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const uniqueId = localStorage.getItem("uniqueId");
+    localStorage.setItem("personalInfo", JSON.stringify(form));
 
-      if (!uniqueId) {
-        throw new Error("Pet info missing. Please start again.");
-      }
+    setTimeout(() => {
+      navigate("/success");
+    }, 4000);
 
-      await api.post("/update-lead", {
+    const uniqueId = localStorage.getItem("uniqueId");
+
+    if (!uniqueId) {
+      console.log("Pet info missing. Personal info will not save yet.");
+      return;
+    }
+
+    api
+      .post("/update-lead", {
         uniqueId,
         ...form,
+      })
+      .catch((error) => {
+        console.log(
+          "Personal info save failed:",
+          error.response?.data?.message || error.message || error
+        );
       });
-
-      localStorage.setItem("personalInfo", JSON.stringify(form));
-
-      setTimeout(() => {
-        navigate("/success");
-      }, 800);
-    } catch (error) {
-      setLoading(false);
-      setErrors({
-        submit:
-          error.response?.data?.message ||
-          error.message ||
-          "Personal info save failed. Backend check karo.",
-      });
-    }
   };
 
   return (

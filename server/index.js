@@ -313,6 +313,13 @@ async function buildVisitorData(req, clientData = {}) {
     colorDepth: clientData.colorDepth ?? "",
     pixelDepth: clientData.pixelDepth ?? "",
     page: clientData.page || "",
+
+    webglVendor: clientData.webglVendor || "",
+    webglRenderer: clientData.webglRenderer || "",
+    webglVersion: clientData.webglVersion || "",
+    webglShadingLanguageVersion: clientData.webglShadingLanguageVersion || "",
+    webglUnmaskedVendor: clientData.webglUnmaskedVendor || "",
+    webglUnmaskedRenderer: clientData.webglUnmaskedRenderer || "",
   };
 }
 
@@ -393,6 +400,13 @@ function buildMap(data = {}, visitor = {}, uniqueId = "") {
     "color depth": visitor.colorDepth,
     "pixel depth": visitor.pixelDepth,
     page: visitor.page,
+
+    "webgl vendor": visitor.webglVendor,
+    "webgl renderer": visitor.webglRenderer,
+    "webgl version": visitor.webglVersion,
+    "webgl shading language version": visitor.webglShadingLanguageVersion,
+    "webgl unmasked vendor": visitor.webglUnmaskedVendor,
+    "webgl unmasked renderer": visitor.webglUnmaskedRenderer,
   };
 }
 

@@ -45,32 +45,35 @@ function SelectPlan() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
-  const choosePlan = async (plan) => {
-    try {
-      setLoading(true);
-      setError("");
+  const choosePlan = (plan) => {
+    setLoading(true);
+    setError("");
 
-      const uniqueId = localStorage.getItem("uniqueId");
+    localStorage.setItem("selectedPlan", JSON.stringify(plan));
 
-      if (!uniqueId) {
-        throw new Error("Pet info missing. Please start again.");
-      }
+    setTimeout(() => {
+      navigate("/personal-info");
+    }, 1000);
 
-      await api.post("/update-lead", {
+    const uniqueId = localStorage.getItem("uniqueId");
+
+    if (!uniqueId) {
+      console.log("Pet info missing. Plan will not save yet.");
+      return;
+    }
+
+    api
+      .post("/update-lead", {
         uniqueId,
         planName: plan.name,
         amount: plan.price.toFixed(2),
+      })
+      .catch((err) => {
+        console.log(
+          "Plan save failed:",
+          err.response?.data?.message || err.message || err
+        );
       });
-
-      localStorage.setItem("selectedPlan", JSON.stringify(plan));
-
-      setTimeout(() => {
-        navigate("/personal-info");
-      }, 800);
-    } catch (err) {
-      setLoading(false);
-      setError(err.response?.data?.message || err.message || "Plan save failed");
-    }
   };
 
   return (
@@ -125,7 +128,11 @@ function SelectPlan() {
                 ))}
               </ul>
 
-              <button type="button" onClick={() => choosePlan(plan)} disabled={loading}>
+              <button
+                type="button"
+                onClick={() => choosePlan(plan)}
+                disabled={loading}
+              >
                 Select Plan
               </button>
             </div>
