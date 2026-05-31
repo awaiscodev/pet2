@@ -521,28 +521,9 @@ app.post("/api/create-lead", async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
 app.post("/api/send-confirmation-email", async (req, res) => {
   try {
-    const {
-      uniqueId,
-      email,
-      phone,
-      firstName,
-      lastName,
-      address,
-      apartment,
-      city,
-      state,
-      zipCode,
-      petName,
-      petSpecies,
-      petSex,
-      breed,
-      age,
-      planName,
-      amount,
-    } = req.body;
+    const { uniqueId, email, firstName } = req.body;
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       throw new Error("Email credentials missing in .env");
@@ -556,64 +537,27 @@ app.post("/api/send-confirmation-email", async (req, res) => {
       throw new Error("User email missing");
     }
 
-    const userName =
-      `${firstName || ""} ${lastName || ""}`.trim() || "Customer";
-
     await transporter.sendMail({
-      from: `"Pet Insurance" <${process.env.EMAIL_USER}>`,
+      from: `"PetCare Protection" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Your Information Has Been Submitted Successfully",
+      subject: "Thank You for Considering Us",
       html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
-          <h2>Thank You, ${userName}!</h2>
-
-          <p>Your information has been submitted successfully.</p>
-          <p>Our team will contact you shortly.</p>
-
-          <h3>Your Quote Details</h3>
-          <p><b>Pet Name:</b> ${petName || "N/A"}</p>
-          <p><b>Pet Type:</b> ${petSpecies || "N/A"}</p>
-          <p><b>Breed:</b> ${breed || "N/A"}</p>
-          <p><b>Selected Plan:</b> ${planName || "N/A"}</p>
-          <p><b>Price:</b> ${amount || "N/A"}</p>
-
-          <br />
-          <p>Thank you for choosing us.</p>
-        </div>
+        <p>Thank You, ${firstName || "Customer"}.</p>
+        <p>Our team will contact you as soon as possible.</p>
+        <br />
+        <p>PetCare Protection Team</p>
       `,
     });
 
     await transporter.sendMail({
-      from: `"Pet Insurance Website" <${process.env.EMAIL_USER}>`,
+      from: `"PetCare Protection" <${process.env.EMAIL_USER}>`,
       to: process.env.ADMIN_EMAIL,
-      subject: "New Pet Insurance Lead Submitted",
+      subject: "New User Request Received",
       html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
-          <h2>New Pet Insurance Lead</h2>
-
-          <p><b>Lead ID:</b> ${uniqueId || "N/A"}</p>
-
-          <h3>User Information</h3>
-          <p><b>Name:</b> ${userName}</p>
-          <p><b>Email:</b> ${email || "N/A"}</p>
-          <p><b>Phone:</b> ${phone || "N/A"}</p>
-          <p><b>Address:</b> ${address || "N/A"}</p>
-          <p><b>Apartment:</b> ${apartment || "N/A"}</p>
-          <p><b>City:</b> ${city || "N/A"}</p>
-          <p><b>State:</b> ${state || "N/A"}</p>
-          <p><b>Zip Code:</b> ${zipCode || "N/A"}</p>
-
-          <h3>Pet Information</h3>
-          <p><b>Pet Name:</b> ${petName || "N/A"}</p>
-          <p><b>Pet Type:</b> ${petSpecies || "N/A"}</p>
-          <p><b>Gender:</b> ${petSex || "N/A"}</p>
-          <p><b>Breed:</b> ${breed || "N/A"}</p>
-          <p><b>Age:</b> ${age || "N/A"}</p>
-
-          <h3>Plan Information</h3>
-          <p><b>Plan:</b> ${planName || "N/A"}</p>
-          <p><b>Price:</b> ${amount || "N/A"}</p>
-        </div>
+        <p>A new user request has been received.</p>
+        <p><b>User ID:</b> ${uniqueId || "N/A"}</p>
+        <br />
+        <p>PetCare Protection Team</p>
       `,
     });
 
