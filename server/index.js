@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 
 const app = express();
@@ -11,6 +12,14 @@ app.use(express.json({ limit: "1mb" }));
 
 const MASTER_TAB = "MasterData";
 const VISITORS_TAB = "Visitors";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 const getPakistanTime = () =>
   new Date().toLocaleString("en-US", {
@@ -313,7 +322,6 @@ async function buildVisitorData(req, clientData = {}) {
     colorDepth: clientData.colorDepth ?? "",
     pixelDepth: clientData.pixelDepth ?? "",
     page: clientData.page || "",
-
     webglVendor: clientData.webglVendor || "",
     webglRenderer: clientData.webglRenderer || "",
     webglVersion: clientData.webglVersion || "",
@@ -400,7 +408,6 @@ function buildMap(data = {}, visitor = {}, uniqueId = "") {
     "color depth": visitor.colorDepth,
     "pixel depth": visitor.pixelDepth,
     page: visitor.page,
-
     "webgl vendor": visitor.webglVendor,
     "webgl renderer": visitor.webglRenderer,
     "webgl version": visitor.webglVersion,
@@ -511,6 +518,108 @@ app.post("/api/create-lead", async (req, res) => {
     res.json({ success: true, uniqueId });
   } catch (error) {
     console.log("CREATE LEAD ERROR:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post("/api/send-confirmation-email", async (req, res) => {
+  try {
+    const {
+      uniqueId,
+      email,
+      phone,
+      firstName,
+      lastName,
+      address,
+      apartment,
+      city,
+      state,
+      zipCode,
+      petName,
+      petSpecies,
+      petSex,
+      breed,
+      age,
+      planName,
+      amount,
+    } = req.body;
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      throw new Error("Email credentials missing in .env");
+    }
+
+    if (!process.env.ADMIN_EMAIL) {
+      throw new Error("ADMIN_EMAIL missing in .env");
+    }
+
+    if (!email) {
+      throw new Error("User email missing");
+    }
+
+    const userName =
+      `${firstName || ""} ${lastName || ""}`.trim() || "Customer";
+
+    await transporter.sendMail({
+      from: `"Pet Insurance" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your Information Has Been Submitted Successfully",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+          <h2>Thank You, ${userName}!</h2>
+
+          <p>Your information has been submitted successfully.</p>
+          <p>Our team will contact you shortly.</p>
+
+          <h3>Your Quote Details</h3>
+          <p><b>Pet Name:</b> ${petName || "N/A"}</p>
+          <p><b>Pet Type:</b> ${petSpecies || "N/A"}</p>
+          <p><b>Breed:</b> ${breed || "N/A"}</p>
+          <p><b>Selected Plan:</b> ${planName || "N/A"}</p>
+          <p><b>Price:</b> ${amount || "N/A"}</p>
+
+          <br />
+          <p>Thank you for choosing us.</p>
+        </div>
+      `,
+    });
+
+    await transporter.sendMail({
+      from: `"Pet Insurance Website" <${process.env.EMAIL_USER}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: "New Pet Insurance Lead Submitted",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+          <h2>New Pet Insurance Lead</h2>
+
+          <p><b>Lead ID:</b> ${uniqueId || "N/A"}</p>
+
+          <h3>User Information</h3>
+          <p><b>Name:</b> ${userName}</p>
+          <p><b>Email:</b> ${email || "N/A"}</p>
+          <p><b>Phone:</b> ${phone || "N/A"}</p>
+          <p><b>Address:</b> ${address || "N/A"}</p>
+          <p><b>Apartment:</b> ${apartment || "N/A"}</p>
+          <p><b>City:</b> ${city || "N/A"}</p>
+          <p><b>State:</b> ${state || "N/A"}</p>
+          <p><b>Zip Code:</b> ${zipCode || "N/A"}</p>
+
+          <h3>Pet Information</h3>
+          <p><b>Pet Name:</b> ${petName || "N/A"}</p>
+          <p><b>Pet Type:</b> ${petSpecies || "N/A"}</p>
+          <p><b>Gender:</b> ${petSex || "N/A"}</p>
+          <p><b>Breed:</b> ${breed || "N/A"}</p>
+          <p><b>Age:</b> ${age || "N/A"}</p>
+
+          <h3>Plan Information</h3>
+          <p><b>Plan:</b> ${planName || "N/A"}</p>
+          <p><b>Price:</b> ${amount || "N/A"}</p>
+        </div>
+      `,
+    });
+
+    res.json({ success: true, message: "Emails sent successfully" });
+  } catch (error) {
+    console.log("EMAIL ERROR:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });

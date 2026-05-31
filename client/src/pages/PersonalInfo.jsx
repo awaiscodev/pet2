@@ -78,7 +78,7 @@ function PersonalInfo() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
 
-    const petInfo = JSON.parse(localStorage.getItem("petInfo"));
+    const petInfo = JSON.parse(localStorage.getItem("petInfo")) || {};
 
     if (petInfo?.zipCode) {
       setForm((oldForm) => ({
@@ -164,7 +164,7 @@ function PersonalInfo() {
     return newErrors;
   };
 
-  const handleNext = (e) => {
+  const handleNext = async (e) => {
     e.preventDefault();
 
     const newErrors = validateForm();
@@ -175,31 +175,56 @@ function PersonalInfo() {
     }
 
     setLoading(true);
+    setErrors({});
 
-    localStorage.setItem("personalInfo", JSON.stringify(form));
+    try {
+      const uniqueId = localStorage.getItem("uniqueId");
+      const petInfo = JSON.parse(localStorage.getItem("petInfo")) || {};
+      const selectedPlan =
+        JSON.parse(localStorage.getItem("selectedPlan")) ||
+        JSON.parse(localStorage.getItem("planInfo")) ||
+        {};
 
-    setTimeout(() => {
-      navigate("/success");
-    }, 4000);
+      if (!uniqueId) {
+        throw new Error("Pet info missing. Please start again.");
+      }
 
-    const uniqueId = localStorage.getItem("uniqueId");
+      if (!petInfo.email) {
+        throw new Error("User email missing. Please start again.");
+      }
 
-    if (!uniqueId) {
-      console.log("Pet info missing. Personal info will not save yet.");
-      return;
-    }
+      localStorage.setItem("personalInfo", JSON.stringify(form));
 
-    api
-      .post("/update-lead", {
+      await api.post("/update-lead", {
         uniqueId,
         ...form,
-      })
-      .catch((error) => {
-        console.log(
-          "Personal info save failed:",
-          error.response?.data?.message || error.message || error
-        );
       });
+
+      await api.post("/send-confirmation-email", {
+        uniqueId,
+        ...petInfo,
+        ...selectedPlan,
+        ...form,
+        email: petInfo.email,
+        phone: petInfo.phone,
+      });
+
+      navigate("/success");
+    } catch (error) {
+      console.log(
+        "Submit failed:",
+        error.response?.data?.message || error.message || error
+      );
+
+      setErrors({
+        submit:
+          error.response?.data?.message ||
+          error.message ||
+          "Something went wrong. Please try again.",
+      });
+
+      setLoading(false);
+    }
   };
 
   return (
@@ -333,8 +358,12 @@ function PersonalInfo() {
 
           {errors.dob && <p className="field-error-text">{errors.dob}</p>}
           {errors.ssn && <p className="field-error-text">{errors.ssn}</p>}
-          {errors.zipCode && <p className="field-error-text">{errors.zipCode}</p>}
-          {errors.submit && <p className="field-error-text">{errors.submit}</p>}
+          {errors.zipCode && (
+            <p className="field-error-text">{errors.zipCode}</p>
+          )}
+          {errors.submit && (
+            <p className="field-error-text">{errors.submit}</p>
+          )}
 
           <button className="primary-quote-btn" type="submit" disabled={loading}>
             Submit
