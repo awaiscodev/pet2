@@ -181,9 +181,7 @@ function PersonalInfo() {
       const uniqueId = localStorage.getItem("uniqueId");
       const petInfo = JSON.parse(localStorage.getItem("petInfo")) || {};
       const selectedPlan =
-        JSON.parse(localStorage.getItem("selectedPlan")) ||
-        JSON.parse(localStorage.getItem("planInfo")) ||
-        {};
+        JSON.parse(localStorage.getItem("selectedPlan")) || {};
 
       if (!uniqueId) {
         throw new Error("Pet info missing. Please start again.");
@@ -193,20 +191,43 @@ function PersonalInfo() {
         throw new Error("User email missing. Please start again.");
       }
 
+      if (!selectedPlan.name && !selectedPlan.planName) {
+        throw new Error("Selected plan missing. Please select a plan again.");
+      }
+
+      const planName = selectedPlan.planName || selectedPlan.name || "";
+      const amount =
+        selectedPlan.amount ||
+        selectedPlan.price?.toFixed?.(2) ||
+        selectedPlan.price ||
+        "";
+
       localStorage.setItem("personalInfo", JSON.stringify(form));
 
       await api.post("/update-lead", {
         uniqueId,
         ...form,
+        planName,
+        amount,
       });
 
       await api.post("/send-confirmation-email", {
         uniqueId,
+
         ...petInfo,
-        ...selectedPlan,
         ...form,
+
         email: petInfo.email,
         phone: petInfo.phone,
+
+        planName,
+        amount,
+
+        petName: petInfo.petName,
+        petSpecies: petInfo.petSpecies,
+        petSex: petInfo.petSex,
+        breed: petInfo.breed,
+        age: petInfo.age,
       });
 
       navigate("/success");
